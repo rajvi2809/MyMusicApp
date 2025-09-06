@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   currentSongs: [],
@@ -6,61 +6,60 @@ const initialState = {
   isActive: false,
   isPlaying: false,
   activeSong: {},
-  genreListId: '',
+  genreListId: "",
 };
 
 const playerSlice = createSlice({
-  name: 'player',
+  name: "player",
   initialState,
   reducers: {
-   setActiveSong: (state, action) => {
-  const song = action.payload.song;
+    // payload can be { song, data, i }
+    setActiveSong: (state, action) => {
+      const { song, data, i } = action.payload || {};
+      // Normalize list (Shazam returns an array; Apple Music often returns {data:[...]})
+      const list = Array.isArray(data)
+        ? data
+        : data && Array.isArray(data.data)
+        ? data.data
+        : [];
 
-  // Normalize so all components work regardless of API source
-  const normalizedSong = {
-    ...song,
-    title: song?.attributes?.name ?? song?.title,
-    subtitle: song?.attributes?.artistName ?? song?.subtitle,
-    previewUrl:
-      song?.attributes?.previews?.[0]?.url ??
-      song?.hub?.actions?.[1]?.uri ??
-      null,
-  };
-
-  state.activeSong = normalizedSong;
-
-  if (action.payload?.data?.tracks?.hits) {
-    state.currentSongs = action.payload.data.tracks.hits;
-  } else if (action.payload?.data?.properties) {
-    state.currentSongs = action.payload?.data?.tracks;
-  } else {
-    state.currentSongs = action.payload.data;
-  }
-
-  state.currentIndex = action.payload.i;
-  state.isActive = true;
-},
+      state.currentSongs = list;
+      state.currentIndex = typeof i === "number" ? i : 0;
+      state.activeSong = song || list[state.currentIndex] || {};
+      state.isActive = !!state.activeSong;
+    },
 
     nextSong: (state, action) => {
-      if (state.currentSongs[action.payload]?.track) {
-        state.activeSong = state.currentSongs[action.payload]?.track;
-      } else {
-        state.activeSong = state.currentSongs[action.payload];
-      }
+      // optional payload: index to jump to
+      const nextIndex =
+        typeof action.payload === "number"
+          ? action.payload
+          : state.currentIndex + 1;
 
-      state.currentIndex = action.payload;
-      state.isActive = true;
+      if (!state.currentSongs?.length) return;
+
+      const boundedIndex =
+        nextIndex >= state.currentSongs.length ? 0 : nextIndex;
+
+      state.currentIndex = boundedIndex;
+      state.activeSong = state.currentSongs[boundedIndex] || {};
+      state.isActive = !!state.activeSong;
     },
 
     prevSong: (state, action) => {
-      if (state.currentSongs[action.payload]?.track) {
-        state.activeSong = state.currentSongs[action.payload]?.track;
-      } else {
-        state.activeSong = state.currentSongs[action.payload];
-      }
+      const prevIndex =
+        typeof action.payload === "number"
+          ? action.payload
+          : state.currentIndex - 1;
 
-      state.currentIndex = action.payload;
-      state.isActive = true;
+      if (!state.currentSongs?.length) return;
+
+      const boundedIndex =
+        prevIndex < 0 ? state.currentSongs.length - 1 : prevIndex;
+
+      state.currentIndex = boundedIndex;
+      state.activeSong = state.currentSongs[boundedIndex] || {};
+      state.isActive = !!state.activeSong;
     },
 
     playPause: (state, action) => {
@@ -73,6 +72,12 @@ const playerSlice = createSlice({
   },
 });
 
-export const { setActiveSong, nextSong, prevSong, playPause, selectGenreListId } = playerSlice.actions;
+export const {
+  setActiveSong,
+  nextSong,
+  prevSong,
+  playPause,
+  selectGenreListId,
+} = playerSlice.actions;
 
 export default playerSlice.reducer;
