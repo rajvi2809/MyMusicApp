@@ -13,20 +13,33 @@ const playerSlice = createSlice({
   name: 'player',
   initialState,
   reducers: {
-    setActiveSong: (state, action) => {
-      state.activeSong = action.payload.song;
+   setActiveSong: (state, action) => {
+  const song = action.payload.song;
 
-      if (action.payload?.data?.tracks?.hits) {
-        state.currentSongs = action.payload.data.tracks.hits;
-      } else if (action.payload?.data?.properties) {
-        state.currentSongs = action.payload?.data?.tracks;
-      } else {
-        state.currentSongs = action.payload.data;
-      }
+  // Normalize so all components work regardless of API source
+  const normalizedSong = {
+    ...song,
+    title: song?.attributes?.name ?? song?.title,
+    subtitle: song?.attributes?.artistName ?? song?.subtitle,
+    previewUrl:
+      song?.attributes?.previews?.[0]?.url ??
+      song?.hub?.actions?.[1]?.uri ??
+      null,
+  };
 
-      state.currentIndex = action.payload.i;
-      state.isActive = true;
-    },
+  state.activeSong = normalizedSong;
+
+  if (action.payload?.data?.tracks?.hits) {
+    state.currentSongs = action.payload.data.tracks.hits;
+  } else if (action.payload?.data?.properties) {
+    state.currentSongs = action.payload?.data?.tracks;
+  } else {
+    state.currentSongs = action.payload.data;
+  }
+
+  state.currentIndex = action.payload.i;
+  state.isActive = true;
+},
 
     nextSong: (state, action) => {
       if (state.currentSongs[action.payload]?.track) {

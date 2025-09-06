@@ -3,26 +3,58 @@ import { useDispatch } from "react-redux";
 import PlayPause from "./PlayPause";
 import { playPause, setActiveSong } from "../redux/features/playerSlice";
 
-const SongCard = ({ song, i }) => {
-  const activeSong = { title: "Test" };
-  console.log("Song Data:", song);
+const SongCard = ({ song, isPlaying, activeSong, i, data }) => {
+  const dispatch = useDispatch();
+
+  const handlePauseClick = () => {
+    dispatch(playPause(false));
+  };
+
+  const handlePlayClick = () => {
+    dispatch(setActiveSong({ song, data, i }));
+    dispatch(playPause(true));
+  };
+
+  console.log("Shazam Song Data:", song);
   return (
     <div className="flex flex-col w-[250px] p-4 bg-white/5 bg-opacity-80 backdrop-blur-sm animate-slideup rounder-lg cursor-pointer">
       <div className="relative w-full h-56 group">
         <div
           className={`absolute inset-0 justify-center items-center bg-black bg-opacity-50 group-hover:flex ${
-            activeSong?.title === song.title
+            activeSong?.attributes?.name === song.attributes.name
               ? "flex bg-black bg-opacity-70"
               : "hidden"
           }`}
         >
-          <PlayPause />
+          <PlayPause
+            isPlaying={isPlaying}
+            activeSong={activeSong}
+            song={song}
+            handlePause={handlePauseClick}
+            handlePlay={handlePlayClick}
+          />
         </div>
         <img
           alt="song_img"
-          src={song.attributes.artwork.url}
+          src={song?.attributes?.artwork?.url}
           className="w-full h-full object-cover rounded-lg"
         />
+      </div>
+      <div className="mt-4 flex flex-col gap-1">
+        <p className="text-white text-lg font-semibold truncate">
+          <Link to={`/songs/${song?.id}`}>{song.attributes.name}</Link>
+        </p>
+        <p className="text-gray-400 text-sm truncate mt-1">
+          <Link
+            to={
+              song.relationships?.artists?.data?.length > 0
+                ? `/artists/${song.relationships.artists.data[0].id}`
+                : "/top-artists"
+            }
+          >
+            {song.attributes.artistName}
+          </Link>
+        </p>
       </div>
     </div>
   );
