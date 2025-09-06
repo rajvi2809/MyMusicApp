@@ -1,5 +1,3 @@
-const PlayPause = () => (
-  <div>Loader</div>
-);
+const PlayPause = () => <div></div>;
 
 export default PlayPause;
