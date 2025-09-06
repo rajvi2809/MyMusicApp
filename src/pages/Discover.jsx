@@ -7,7 +7,12 @@ const Discover = () => {
   const dispatch = useDispatch();
   const { activeSong, isPlaying } = useSelector((state) => state.player);
 
-  const { data, isFetching, error } = useGetTopChartsQuery();
+  const { data, isFetching, error } = useGetTopChartsQuery(undefined, {
+    refetchOnMountOrArgChange: false, // don't refetch when component mounts again
+    refetchOnFocus: false, // don't refetch when window/tab gets focus
+    refetchOnReconnect: false, // don't refetch when network reconnects
+  });
+
   const genreTitle = "Pop";
 
   if (isFetching) return <Loader title="Loading Songs..." />;
@@ -28,7 +33,7 @@ const Discover = () => {
           ))}
         </select>
       </div>
-      <div className="flex flex-wrap sm:justify-start justify-center gap-8">
+      <div className="flex flex-wrap gap-10">
         {data?.map((song, i) => (
           <SongCard
             key={song.id}
